@@ -55,17 +55,20 @@ class MapScreen extends StatelessWidget {
                   color: AppTheme.accentOrange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+               child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.construction_rounded,
                         color: AppTheme.accentOrange),
                     SizedBox(width: 8),
-                    Text(
-                      'Disponible prochainement (Phase 7)',
-                      style: TextStyle(
-                        color: AppTheme.accentOrange,
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        'Disponible prochainement (Phase 7)',
+                        style: TextStyle(
+                          color: AppTheme.accentOrange,
+                          fontWeight: FontWeight.w600,
+                        ),
+
                       ),
                     ),
                   ],

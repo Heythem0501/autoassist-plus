@@ -61,11 +61,13 @@ class MaintenanceDashboard extends StatelessWidget {
                     Icon(Icons.construction_rounded,
                         color: AppTheme.accentOrange),
                     SizedBox(width: 8),
-                    Text(
-                      'Disponible prochainement (Phase 8)',
-                      style: TextStyle(
-                        color: AppTheme.accentOrange,
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        'Disponible prochainement (Phase 8)',
+                        style: TextStyle(
+                          color: AppTheme.accentOrange,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],

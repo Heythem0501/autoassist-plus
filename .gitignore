@@ -50,3 +50,7 @@ app.*.map.json
 
 # Fichier temporaire de commit
 commit_msg.txt
+# Variables d'environnement (cles API secretes)
+.env
+.env.local
+.env.*.local
