@@ -65,4 +65,5 @@ class DefaultFirebaseOptions {
     projectId: 'autoassist-plus',
     storageBucket: 'autoassist-plus.firebasestorage.app',
   );
+
 }
