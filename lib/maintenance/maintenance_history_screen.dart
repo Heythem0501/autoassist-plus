@@ -138,7 +138,7 @@ class MaintenanceHistoryScreen extends StatelessWidget {
             Container(
               width: 90,
               height: 90,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppTheme.primaryBlueLight,
                 shape: BoxShape.circle,
               ),

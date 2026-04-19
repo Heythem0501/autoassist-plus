@@ -261,21 +261,21 @@ class _MaintenanceDashboardState extends State<MaintenanceDashboard> {
   }
 
   Widget _buildNoVehicleState() {
-    return Center(
+    return const Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.directions_car_outlined,
+            Icon(Icons.directions_car_outlined,
                 size: 60, color: AppTheme.textSecondary),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'Aucun véhicule enregistré',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: 6),
-            const Text(
+            SizedBox(height: 6),
+            Text(
               'Rendez-vous dans l\'onglet Profil pour ajouter votre voiture.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),

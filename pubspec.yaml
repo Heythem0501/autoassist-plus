@@ -51,6 +51,7 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   # Génération automatique des icônes d'app
   flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.7
 
 flutter:
   uses-material-design: true
@@ -66,3 +67,10 @@ flutter_launcher_icons:
   adaptive_icon_background: "#000000"
   adaptive_icon_foreground: "assets/images/logo_orange.png"
   adaptive_icon_foreground_inset: 0
+flutter_native_splash:
+  color: "#F8F9FA"
+  image: "assets/images/logo_blue.png"
+  android_12:
+    color: "#F8F9FA"
+    image: "assets/images/logo_blue.png"
+    icon_background_color: "#F8F9FA"

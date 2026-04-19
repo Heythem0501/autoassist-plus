@@ -230,13 +230,13 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
       maxLength: 500,
       textInputAction: TextInputAction.newline,
       enabled: !_isAnalyzing,
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         labelText: 'Décrivez les symptômes',
         hintText:
             'Exemple : Ma voiture fait un bruit métallique quand je freine...',
         hintMaxLines: 2,
         alignLabelWithHint: true,
-        prefixIcon: const Padding(
+        prefixIcon: Padding(
           padding: EdgeInsets.only(bottom: 80),
           child: Icon(Icons.edit_note_rounded, color: AppTheme.primaryBlue),
         ),
@@ -297,11 +297,11 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.lightbulb_outline_rounded,
+            Icon(Icons.lightbulb_outline_rounded,
                 color: AppTheme.accentOrange, size: 18),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               'Exemples',
               style: TextStyle(
@@ -431,11 +431,11 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.format_quote_rounded,
+              Icon(Icons.format_quote_rounded,
                   color: AppTheme.textSecondary, size: 16),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(
                 'Vos symptômes',
                 style: TextStyle(

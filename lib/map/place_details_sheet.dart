@@ -138,7 +138,7 @@ class PlaceDetailsSheet extends StatelessWidget {
                             const SizedBox(width: 8),
                             Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.near_me_rounded,
                                   size: 12,
                                   color: AppTheme.textSecondary,

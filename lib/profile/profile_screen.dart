@@ -59,12 +59,13 @@ class ProfileScreen extends StatelessWidget {
             // ============ SECTION COMPTE ============
             _buildSectionTitle('Compte'),
             const SizedBox(height: 8),
+            _buildAboutCard(context),
             _buildLogoutCard(context),
 
             const SizedBox(height: 20),
 
             // ============ FOOTER ============
-            Center(
+            const Center(
               child: Text(
                 'AutoAssist+ · v1.0.0',
                 style: TextStyle(
@@ -117,7 +118,7 @@ class ProfileScreen extends StatelessWidget {
           Container(
             width: 60,
             height: 60,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
             ),
@@ -311,7 +312,110 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+/// Card "À propos" qui ouvre un dialog avec les infos de l'application
+  Widget _buildAboutCard(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _showAboutDialog(context),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlueLight,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.info_outline_rounded,
+                    color: AppTheme.primaryBlue,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'À propos',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Informations sur l\'application',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppTheme.textSecondary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
+  /// Affiche le dialog natif "À propos" avec les infos de l'application
+  void _showAboutDialog(BuildContext context) {
+    showAboutDialog(
+      context: context,
+      applicationName: 'AutoAssist+',
+      applicationVersion: '1.0.0',
+      applicationIcon: Image.asset(
+        'assets/images/logo_blue.png',
+        width: 60,
+        height: 60,
+      ),
+      applicationLegalese: '© 2026 Heythem Ramdani & Taha Mazouz',
+      children: [
+        const SizedBox(height: 16),
+        const Text(
+          'Application d\'assistance automobile intelligente pour conducteurs algériens.',
+          style: TextStyle(fontSize: 13, height: 1.4),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Fonctionnalités :',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          '• Diagnostic IA (Google Gemini)\n'
+          '• Carte des garages et stations-service\n'
+          '• Suivi des entretiens avec rappels\n'
+          '• Sauvegarde cloud (Firebase)',
+          style: TextStyle(fontSize: 12.5, height: 1.5),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Projet de fin d\'études — Master 2 Informatique',
+          style: TextStyle(
+            fontSize: 12,
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          ),
+        ),
+      ],
+    );
+  }
   Widget _buildLogoutCard(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
