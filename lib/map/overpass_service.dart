@@ -52,7 +52,6 @@ class OverpassService {
 
     // Essaie chaque serveur Overpass l'un après l'autre
     http.Response? response;
-    Exception? lastError;
 
     for (final endpoint in _endpoints) {
       try {
@@ -79,7 +78,6 @@ class OverpassService {
       } on OverpassException {
         rethrow;
       } catch (e) {
-        lastError = Exception(e.toString());
         response = null;
         continue;
       }

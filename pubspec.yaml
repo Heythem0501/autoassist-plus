@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
 
   # Firebase
@@ -35,7 +37,7 @@ dependencies:
 
   # Utilitaires
   url_launcher: ^6.3.1
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # UI
   google_fonts: ^6.2.1
@@ -47,9 +49,20 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  # Génération automatique des icônes d'app
+  flutter_launcher_icons: ^0.14.1
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
     - .env
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  image_path: "assets/images/logo_orange.png"
+  min_sdk_android: 21
+  background_color_android: "#000000"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/images/logo_orange.png"
+  adaptive_icon_foreground_inset: 0

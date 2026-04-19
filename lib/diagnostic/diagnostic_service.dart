@@ -7,43 +7,19 @@ import '../vehicle/vehicle_model.dart';
 import 'diagnostic_model.dart';
 
 /// Service d'appel à l'API Gemini pour le diagnostic automobile
-///
-/// Responsabilités :
-/// - Construire le prompt contextuel (avec les infos de la voiture)
-/// - Appeler l'API REST de Gemini
-/// - Parser le JSON structuré retourné
-/// - Gérer les erreurs réseau et de parsing
-/// - Sauvegarder les diagnostics dans Firestore
 class DiagnosticService {
-  /// Modèle Gemini utilisé (rapide et gratuit)
   static const String _model = 'gemini-2.5-flash-lite';
-
-  /// Endpoint de l'API Gemini (REST v1beta)
   static const String _baseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models';
-
-  /// Timeout pour l'appel API (en secondes)
   static const int _timeoutSeconds = 30;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // ==========================================================================
-  // APPEL PRINCIPAL
-  // ==========================================================================
-
-  /// Lance un diagnostic à partir de symptômes décrits en langage naturel
-  ///
-  /// [symptoms] : description libre en français ou arabe
-  /// [vehicle]  : le véhicule de l'utilisateur (pour contextualiser)
-  ///
-  /// Retourne un [DiagnosticResult] en cas de succès.
-  /// Lance une [DiagnosticException] en cas d'erreur.
   Future<DiagnosticResult> diagnose({
     required String symptoms,
     required Vehicle vehicle,
   }) async {
-    // Validation rapide des entrées
     final trimmed = symptoms.trim();
     if (trimmed.length < 10) {
       throw DiagnosticException(
@@ -51,7 +27,6 @@ class DiagnosticService {
       );
     }
 
-    // Récupération de la clé API depuis .env
     final apiKey = dotenv.env['GEMINI_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
       throw DiagnosticException(
@@ -59,11 +34,9 @@ class DiagnosticService {
       );
     }
 
-    // Construction du prompt et de l'URL
     final prompt = _buildPrompt(symptoms: trimmed, vehicle: vehicle);
     final url = Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey');
 
-    // Corps de la requête HTTP
     final body = jsonEncode({
       'contents': [
         {
@@ -93,7 +66,6 @@ class DiagnosticService {
       ],
     });
 
-    // Appel HTTP
     http.Response response;
     try {
       response = await http
@@ -109,15 +81,10 @@ class DiagnosticService {
       );
     }
 
-    // DEBUG : afficher la réponse complète dans les logs
-    print('🔍 GEMINI STATUS: ${response.statusCode}');
-    print('🔍 GEMINI BODY: ${response.body}');
-
     if (response.statusCode != 200) {
       throw DiagnosticException(_parseHttpError(response));
     }
 
-    // Extraction du texte JSON depuis la réponse
     late Map<String, dynamic> geminiJson;
     try {
       final fullResponse =
@@ -136,8 +103,6 @@ class DiagnosticService {
       if (text == null || text.trim().isEmpty) {
         throw const FormatException('Texte vide dans la réponse');
       }
-
-      // Gemini retourne du JSON pur (grâce à responseMimeType)
       geminiJson = jsonDecode(text) as Map<String, dynamic>;
     } on FormatException catch (e) {
       throw DiagnosticException(
@@ -149,36 +114,29 @@ class DiagnosticService {
       );
     }
 
-    // Construction du résultat
     final result = DiagnosticResult.fromGeminiJson(
       json: geminiJson,
       symptoms: trimmed,
     );
 
-    // Vérification : au moins une cause trouvée
     if (result.causes.isEmpty) {
       throw DiagnosticException(
         'L\'IA n\'a pas pu identifier de cause. Soyez plus précis dans votre description.',
       );
     }
 
-    // Sauvegarde dans Firestore (historique, sans bloquer en cas d'erreur)
     _saveToFirestore(result);
-
     return result;
   }
 
-  // ==========================================================================
-  // CONSTRUCTION DU PROMPT
-  // ==========================================================================
-
   /// Construit le prompt envoyé à Gemini
+  /// La réponse est TOUJOURS en français, peu importe la langue de saisie.
   String _buildPrompt({
     required String symptoms,
     required Vehicle vehicle,
   }) {
     return '''
-Tu es un expert automobile chevronné. L'utilisateur décrit les symptômes de sa voiture en français ou en arabe classique. Tu dois identifier les causes probables.
+Tu es un expert automobile chevronné. L'utilisateur décrit les symptômes de sa voiture en français ou en arabe. Tu dois identifier les causes probables.
 
 Informations sur le véhicule :
 - Marque : ${vehicle.brand}
@@ -217,19 +175,14 @@ Retourne UNIQUEMENT un objet JSON valide avec cette structure exacte (pas de mar
 Règles strictes :
 1. Entre 2 et 5 causes possibles, triées par probabilité décroissante.
 2. Les probabilités doivent totaliser 100.
-3. "gravite" doit être exactement "vert", "orange", ou "rouge" (sans accent sur rouge).
-4. "cause" : description courte (3-8 mots) en français.
-5. "recommandation" : conseil pratique adapté à la gravité maximale.
+3. "gravite" doit être exactement "vert", "orange", ou "rouge".
+4. "cause" : description courte (3-8 mots) en FRANÇAIS (même si l'utilisateur écrit en arabe).
+5. "recommandation" : conseil pratique en FRANÇAIS adapté à la gravité maximale.
 6. Tiens compte de l'âge, du kilométrage et du type de carburant du véhicule.
 7. Réponds UNIQUEMENT en JSON valide, sans texte avant ou après.
 ''';
   }
 
-  // ==========================================================================
-  // SAUVEGARDE FIRESTORE (historique)
-  // ==========================================================================
-
-  /// Sauvegarde le diagnostic dans l'historique Firestore (non bloquant)
   void _saveToFirestore(DiagnosticResult result) {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return;
@@ -240,7 +193,6 @@ Règles strictes :
         .collection('diagnostics')
         .add(result.toFirestore())
         .catchError((e) {
-      // Silencieux : ne pas bloquer l'affichage du résultat
       return _firestore
           .collection('users')
           .doc(userId)
@@ -249,7 +201,6 @@ Règles strictes :
     });
   }
 
-  /// Récupère l'historique des diagnostics de l'utilisateur
   Stream<List<DiagnosticResult>> getHistoryStream() {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return Stream.value([]);
@@ -281,11 +232,6 @@ Règles strictes :
     });
   }
 
-  // ==========================================================================
-  // HELPERS
-  // ==========================================================================
-
-  /// Traduit une erreur HTTP Gemini en message utilisateur
   String _parseHttpError(http.Response response) {
     try {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
@@ -308,7 +254,6 @@ Règles strictes :
   }
 }
 
-/// Exception métier du service Diagnostic
 class DiagnosticException implements Exception {
   final String message;
   DiagnosticException(this.message);

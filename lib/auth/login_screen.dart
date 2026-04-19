@@ -113,45 +113,17 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          width: 100,
-          height: 100,
-          decoration: BoxDecoration(
-            color: AppTheme.primaryBlueLight,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: const Icon(
-            Icons.directions_car_rounded,
-            size: 60,
-            color: AppTheme.primaryBlue,
-          ),
+        Image.asset(
+          'assets/images/logo_blue.png',
+          width: 200,
+          height: 200,
+          fit: BoxFit.contain,
         ),
         const SizedBox(height: 16),
-        RichText(
-          text: const TextSpan(
-            children: [
-              TextSpan(
-                text: 'AutoAssist',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryBlue,
-                ),
-              ),
-              TextSpan(
-                text: '+',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.accentOrange,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
+
 
   Widget _buildEmailField() {
     return TextFormField(

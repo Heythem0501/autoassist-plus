@@ -4,6 +4,7 @@ import '../core/app_theme.dart';
 import 'vehicle_model.dart';
 import 'vehicle_service.dart';
 import 'vehicle_constants.dart';
+import '../notifications/notification_service.dart';
 
 /// Écran de saisie/modification des informations du véhicule
 class VehicleInfoScreen extends StatefulWidget {
@@ -79,6 +80,8 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
     );
 
     final errorMessage = await _vehicleService.saveVehicle(vehicle);
+    // Programmer le rappel de mise à jour du kilométrage
+    await NotificationService().scheduleMileageReminder();
 
     if (!mounted) return;
 
