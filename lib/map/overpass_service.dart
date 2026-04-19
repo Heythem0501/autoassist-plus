@@ -1,166 +1,234 @@
 import 'dart:convert';
+import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
 import 'place_model.dart';
 
-/// Service d'appel à l'API Overpass (OpenStreetMap)
+/// Service de recherche de lieux via Nominatim (OpenStreetMap)
 ///
-/// Permet de rechercher des points d'intérêt (garages, stations-service,
-/// dépanneurs) autour d'une position géographique.
-///
-/// Documentation : https://wiki.openstreetmap.org/wiki/Overpass_API
+/// Nominatim est l'API officielle d'OpenStreetMap — stable et fiable.
+/// Pour chaque type de lieu, plusieurs requêtes sont lancées en parallèle
+/// afin de couvrir un maximum de variantes linguistiques.
 class OverpassService {
-  /// Liste des serveurs Overpass publics
-  /// L'app essaie chaque serveur dans l'ordre jusqu'à obtenir une réponse
-  static const List<String> _endpoints = [
-    'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter',
-    'https://overpass.private.coffee/api/interpreter',
-  ];
+  static const String _nominatimUrl =
+      'https://nominatim.openstreetmap.org/search';
 
-  /// Timeout pour l'appel API (Overpass peut être lent)
-  static const int _timeoutSeconds = 25;
-
-  /// Rayon de recherche par défaut (en mètres)
-  static const int defaultRadiusMeters = 10000; // 10 km
-
-  // ==========================================================================
-  // RECHERCHE PRINCIPALE
-  // ==========================================================================
+  static const int _timeoutSeconds = 15;
+  static const int defaultRadiusMeters = 10000;
 
   /// Recherche des lieux d'un type donné autour d'une position
   ///
-  /// [userLat] / [userLng] : position de l'utilisateur
-  /// [type] : type de lieu recherché (garage, dépanneur, station-service)
-  /// [radiusMeters] : rayon de recherche en mètres (défaut 10 km)
-  ///
-  /// Recherche des lieux d'un type donné autour d'une position
-  ///
-  /// Tente chaque serveur Overpass l'un après l'autre en cas d'échec,
-  /// garantissant une meilleure disponibilité du service.
+  /// Lance plusieurs requêtes en parallèle avec différents mots-clés
+  /// (français, anglais) et fusionne les résultats sans doublons.
   Future<List<Place>> searchNearby({
     required double userLat,
     required double userLng,
     required PlaceType type,
     int radiusMeters = defaultRadiusMeters,
   }) async {
-    final query = _buildQuery(
-      lat: userLat,
-      lng: userLng,
-      type: type,
-      radiusMeters: radiusMeters,
-    );
+    final queries = _getSearchQueries(type);
 
-    // Essaie chaque serveur Overpass l'un après l'autre
-    http.Response? response;
-
-    for (final endpoint in _endpoints) {
-      try {
-        response = await http
-            .post(
-              Uri.parse(endpoint),
-              headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-              body: {'data': query},
-            )
-            .timeout(const Duration(seconds: _timeoutSeconds));
-
-        // Succès → on sort de la boucle
-        if (response.statusCode == 200) break;
-
-        // 429 : inutile d'essayer un autre serveur tout de suite
-        if (response.statusCode == 429) {
-          throw OverpassException(
-            'Trop de requêtes. Réessayez dans quelques minutes.',
-          );
-        }
-
-        // Autres erreurs : on essaie le serveur suivant
-        response = null;
-      } on OverpassException {
-        rethrow;
-      } catch (e) {
-        response = null;
-        continue;
-      }
+    if (kDebugMode) {
+      debugPrint('🔍 Nominatim: ${queries.length} recherches pour $type');
     }
 
-    // Si aucun serveur n'a répondu
-    if (response == null) {
-      throw OverpassException(
-        'Tous les serveurs Overpass sont indisponibles. Vérifiez votre connexion ou réessayez plus tard.',
-      );
-    }
-
-    // Vérification du code HTTP final
-    if (response.statusCode != 200) {
-      throw OverpassException(
-        'Erreur de recherche (code ${response.statusCode}).',
-      );
-    }
-
-    // Parsing du JSON
-    late List<dynamic> elements;
-    try {
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-      elements = body['elements'] as List<dynamic>? ?? [];
-    } catch (e) {
-      throw OverpassException('Réponse invalide du service.');
-    }
-
-    // Conversion en Place
-    final places = <Place>[];
-    for (final element in elements) {
-      try {
-        final place = Place.fromOverpassElement(
-          element: element as Map<String, dynamic>,
-          type: type,
+    // Lancer toutes les recherches en parallèle
+    final futures = queries.map((q) => _searchSingleQuery(
+          query: q,
           userLat: userLat,
           userLng: userLng,
-        );
-        if (place.location.latitude != 0 && place.location.longitude != 0) {
-          places.add(place);
+          type: type,
+          radiusMeters: radiusMeters,
+        ));
+
+    final allResults = await Future.wait(futures, eagerError: false);
+
+    // Fusionner tous les résultats et dédupliquer par ID
+    final seen = <String>{};
+    final mergedPlaces = <Place>[];
+    for (final list in allResults) {
+      for (final place in list) {
+        if (!seen.contains(place.id)) {
+          seen.add(place.id);
+          mergedPlaces.add(place);
         }
-      } catch (e) {
-        continue;
       }
     }
 
-    // Tri par distance croissante
-    places.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
+    // Filtrer par rayon réel
+    mergedPlaces.removeWhere((p) => p.distanceMeters > radiusMeters);
 
-    return places;
+    // Trier par distance croissante
+    mergedPlaces.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
+
+    if (kDebugMode) {
+      debugPrint('🔍 Nominatim: ${mergedPlaces.length} lieux apres fusion');
+    }
+
+    // Limiter à 30 résultats
+    if (mergedPlaces.length > 30) {
+      return mergedPlaces.sublist(0, 30);
+    }
+
+    return mergedPlaces;
   }
-  // ==========================================================================
-  // CONSTRUCTION DE LA REQUÊTE OVERPASS QL
-  // ==========================================================================
 
-  /// Construit une requête Overpass QL pour chercher les POI d'un type
-  /// dans un rayon donné autour d'une position.
-  ///
-  /// Overpass QL est le langage de requête d'Overpass API.
-  /// Doc : https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL
-  String _buildQuery({
-    required double lat,
-    required double lng,
+  /// Effectue une seule recherche Nominatim avec un mot-clé donné
+  Future<List<Place>> _searchSingleQuery({
+    required String query,
+    required double userLat,
+    required double userLng,
     required PlaceType type,
     required int radiusMeters,
-  }) {
-    final tagFilter = type.overpassQuery;
+  }) async {
+    final radiusDegrees = radiusMeters / 111000.0;
+    final minLat = userLat - radiusDegrees;
+    final maxLat = userLat + radiusDegrees;
+    final minLng = userLng - radiusDegrees;
+    final maxLng = userLng + radiusDegrees;
 
-    // Récupère nodes, ways ET relations (certains garages sont mappés
-    // comme des ways représentant des bâtiments)
-    return '''
-[out:json][timeout:25];
-(
-  node[$tagFilter](around:$radiusMeters,$lat,$lng);
-  way[$tagFilter](around:$radiusMeters,$lat,$lng);
-  relation[$tagFilter](around:$radiusMeters,$lat,$lng);
-);
-out center tags;
-''';
+    final uri = Uri.parse(_nominatimUrl).replace(queryParameters: {
+      'q': query,
+      'format': 'json',
+      'limit': '20',
+      'bounded': '1',
+      'viewbox': '$minLng,$minLat,$maxLng,$maxLat',
+      'addressdetails': '1',
+      'extratags': '1',
+    });
+
+    try {
+      final response = await http.get(
+        uri,
+        headers: const {
+          'User-Agent':
+              'AutoAssistPlus/1.0 (Flutter; haythem.ramdani@gmail.com)',
+          'Accept-Language': 'fr,ar,en',
+        },
+      ).timeout(Duration(seconds: _timeoutSeconds));
+
+      if (response.statusCode != 200) return [];
+
+      final data = jsonDecode(response.body) as List<dynamic>;
+
+      final places = <Place>[];
+      for (final item in data) {
+        try {
+          final map = item as Map<String, dynamic>;
+          final place = _parseResult(map, type, userLat, userLng);
+          if (place != null) places.add(place);
+        } catch (_) {
+          continue;
+        }
+      }
+      return places;
+    } catch (_) {
+      return [];
+    }
   }
+
+  /// Liste de requêtes de recherche selon le type de lieu
+  /// Plusieurs variantes pour maximiser les résultats sur OSM
+  List<String> _getSearchQueries(PlaceType type) {
+    switch (type) {
+      case PlaceType.garage:
+        return [
+          'garage',
+          'car repair',
+          'mechanic',
+          'atelier mécanique',
+          'auto repair',
+        ];
+      
+      case PlaceType.stationService:
+        return [
+          'station service',
+          'fuel station',
+          'gas station',
+          'essence',
+          'carburant',
+        ];
+    }
+  }
+
+  /// Convertit un résultat Nominatim en Place
+  Place? _parseResult(
+    Map<String, dynamic> result,
+    PlaceType type,
+    double userLat,
+    double userLng,
+  ) {
+    final latStr = result['lat'] as String?;
+    final lonStr = result['lon'] as String?;
+    if (latStr == null || lonStr == null) return null;
+
+    final lat = double.tryParse(latStr);
+    final lng = double.tryParse(lonStr);
+    if (lat == null || lng == null) return null;
+
+    // Nom
+    final shortName = result['name'] as String?;
+    final displayName = result['display_name'] as String? ?? '';
+    String name = shortName ?? displayName.split(',').first.trim();
+    if (name.isEmpty || name.length < 2) name = 'Sans nom';
+
+    // Adresse
+    String? address;
+    final addressData = result['address'] as Map<String, dynamic>?;
+    if (addressData != null) {
+      final parts = <String>[];
+      if (addressData['road'] != null) parts.add(addressData['road'] as String);
+      final city = addressData['city'] as String? ??
+          addressData['town'] as String? ??
+          addressData['village'] as String?;
+      if (city != null) parts.add(city);
+      if (parts.isNotEmpty) address = parts.join(', ');
+    }
+
+    // Téléphone
+    String? phone;
+    final extratags = result['extratags'] as Map<String, dynamic>?;
+    if (extratags != null) {
+      phone = extratags['phone'] as String? ??
+          extratags['contact:phone'] as String?;
+    }
+
+    // Distance Haversine
+    final distance = _haversineDistance(userLat, userLng, lat, lng);
+
+    final osmId = result['osm_id']?.toString() ?? '${lat}_$lng';
+
+    return Place(
+      id: 'nominatim_$osmId',
+      name: name,
+      location: LatLng(lat, lng),
+      type: type,
+      address: address,
+      phone: phone,
+      distanceMeters: distance,
+    );
+  }
+
+  /// Distance Haversine entre 2 points GPS (en mètres)
+  double _haversineDistance(
+      double lat1, double lon1, double lat2, double lon2) {
+    const earthRadius = 6371000.0;
+    final dLat = _toRadians(lat2 - lat1);
+    final dLon = _toRadians(lon2 - lon1);
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_toRadians(lat1)) *
+            math.cos(_toRadians(lat2)) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return earthRadius * c;
+  }
+
+  double _toRadians(double deg) => deg * math.pi / 180;
 }
 
-/// Exception métier du service Overpass
+/// Exception métier
 class OverpassException implements Exception {
   final String message;
   OverpassException(this.message);

@@ -37,7 +37,8 @@ class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
   void initState() {
     super.initState();
     _selectedType = widget.preselectedType;
-    _mileageController.text = widget.currentMileage.toString();
+    // Champ de kilométrage laissé vide volontairement
+    // L'utilisateur doit saisir le km exact au moment de l'entretien
   }
 
   @override

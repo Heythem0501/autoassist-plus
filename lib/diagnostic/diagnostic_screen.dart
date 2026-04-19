@@ -4,6 +4,7 @@ import '../vehicle/vehicle_service.dart';
 import 'diagnostic_model.dart';
 import 'diagnostic_service.dart';
 import 'diagnostic_result_card.dart';
+import 'diagnostic_history_screen.dart';
 
 /// Écran Diagnostic — saisie des symptômes + affichage des résultats IA
 class DiagnosticScreen extends StatefulWidget {
@@ -115,16 +116,28 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Diagnostic intelligent'),
-        actions: [
-          if (_result != null)
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded),
-              tooltip: 'Nouveau diagnostic',
-              onPressed: _resetDiagnosis,
-            ),
-        ],
+  title: const Text('Diagnostic intelligent'),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.history_rounded),
+      tooltip: 'Historique',
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const DiagnosticHistoryScreen(),
+          ),
+        );
+      },
+    ),
+    if (_result != null)
+      IconButton(
+        icon: const Icon(Icons.refresh_rounded),
+        tooltip: 'Nouveau diagnostic',
+        onPressed: _resetDiagnosis,
       ),
+  ],
+),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),

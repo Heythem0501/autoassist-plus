@@ -373,47 +373,109 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  /// Affiche le dialog natif "À propos" avec les infos de l'application
+  /// Affiche un dialog "À propos" personnalisé (sans bouton licences)
   void _showAboutDialog(BuildContext context) {
-    showAboutDialog(
+    showDialog(
       context: context,
-      applicationName: 'AutoAssist+',
-      applicationVersion: '1.0.0',
-      applicationIcon: Image.asset(
-        'assets/images/logo_blue.png',
-        width: 60,
-        height: 60,
-      ),
-      applicationLegalese: '© 2026 Heythem Ramdani & Taha Mazouz',
-      children: [
-        const SizedBox(height: 16),
-        const Text(
-          'Application d\'assistance automobile intelligente pour conducteurs algériens.',
-          style: TextStyle(fontSize: 13, height: 1.4),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'Fonctionnalités :',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          '• Diagnostic IA (Google Gemini)\n'
-          '• Carte des garages et stations-service\n'
-          '• Suivi des entretiens avec rappels\n'
-          '• Sauvegarde cloud (Firebase)',
-          style: TextStyle(fontSize: 12.5, height: 1.5),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'Projet de fin d\'études — Master 2 Informatique',
-          style: TextStyle(
-            fontSize: 12,
-            fontStyle: FontStyle.italic,
-            color: Colors.grey,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Image.asset(
+                    'assets/images/logo_blue.png',
+                    width: 90,
+                    height: 90,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Center(
+                  child: Text(
+                    'AutoAssist+',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryBlue,
+                    ),
+                  ),
+                ),
+                const Center(
+                  child: Text(
+                    'Version 1.0.0',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Application d\'assistance automobile intelligente pour conducteurs algériens.',
+                  style: TextStyle(fontSize: 13.5, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Fonctionnalités :',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryBlue,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '• Diagnostic IA (Google Gemini)\n'
+                  '• Carte des garages et stations-service\n'
+                  '• Suivi des entretiens avec rappels\n'
+                  '• Sauvegarde cloud (Firebase)',
+                  style: TextStyle(fontSize: 13, height: 1.6),
+                ),
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 12),
+                const Text(
+                  '© 2026 Heythem Ramdani & Taha Mazouz',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Projet de fin d\'études — Master 2 Informatique',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontStyle: FontStyle.italic,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppTheme.accentOrange,
+                    ),
+                    child: const Text(
+                      'Fermer',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
   Widget _buildLogoutCard(BuildContext context) {

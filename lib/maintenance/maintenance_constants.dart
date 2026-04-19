@@ -3,12 +3,12 @@ import '../core/app_theme.dart';
 
 /// Définition d'un type d'entretien avec ses intervalles
 class MaintenanceTypeDefinition {
-  final String id;                    // Identifiant unique interne
-  final String label;                 // Nom affiché
-  final String description;           // Description courte
-  final IconData icon;                // Icône représentative
-  final int? intervalKm;              // Intervalle en km (null si pas basé sur km)
-  final int? intervalDays;            // Intervalle en jours (null si pas basé sur temps)
+  final String id;
+  final String label;
+  final String description;
+  final IconData icon;
+  final int? intervalKm;
+  final int? intervalDays;
 
   const MaintenanceTypeDefinition({
     required this.id,
@@ -20,10 +20,7 @@ class MaintenanceTypeDefinition {
   });
 }
 
-/// Catalogue des 13 types d'entretien supportés
-///
-/// Intervalles basés sur les recommandations constructeurs génériques
-/// pour les véhicules récents (essence et diesel).
+/// Catalogue des types d'entretien supportés
 class MaintenanceConstants {
   static const List<MaintenanceTypeDefinition> types = [
     MaintenanceTypeDefinition(
@@ -127,6 +124,27 @@ class MaintenanceConstants {
       intervalKm: 5000,
       intervalDays: 180,
     ),
+    MaintenanceTypeDefinition(
+      id: 'insurance',
+      label: 'Assurance auto',
+      description: 'Renouvellement de la police d\'assurance',
+      icon: Icons.security_rounded,
+      intervalDays: 365,
+    ),
+    MaintenanceTypeDefinition(
+      id: 'technical_inspection',
+      label: 'Contrôle technique',
+      description: 'Visite technique obligatoire',
+      icon: Icons.fact_check_rounded,
+      intervalDays: 365,
+    ),
+    MaintenanceTypeDefinition(
+      id: 'vignette',
+      label: 'Vignette automobile',
+      description: 'Taxe annuelle sur les véhicules',
+      icon: Icons.receipt_long_rounded,
+      intervalDays: 365,
+    ),
   ];
 
   /// Retourne un type par son ID, ou null si non trouvé
@@ -141,9 +159,9 @@ class MaintenanceConstants {
 
 /// Niveau d'urgence d'un entretien
 enum MaintenanceUrgency {
-  ok,       // Pas urgent (plus de 30j et plus de 1000km)
-  soon,     // Bientôt (< 30j ou < 1000km)
-  overdue;  // Dépassé
+  ok,
+  soon,
+  overdue;
 
   Color get color {
     switch (this) {

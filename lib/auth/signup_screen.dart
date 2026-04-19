@@ -1,6 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../core/app_theme.dart';
 import 'auth_service.dart';
+import 'terms_screen.dart';
 
 /// Écran d'inscription
 ///
@@ -58,7 +60,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (errorMessage != null) {
       _showErrorSnackBar(errorMessage);
     } else {
-      // Inscription réussie — le AuthWrapper redirige automatiquement
+      // Inscription réussie
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('✅ Compte créé avec succès !'),
@@ -69,6 +71,11 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
       );
+      // Retourner à la racine de la navigation pour que AuthWrapper
+      // redirige vers l'écran d'accueil (utilisateur maintenant connecté)
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     }
   }
 
@@ -231,15 +238,39 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Padding(
-                        padding: EdgeInsets.only(top: 4),
-                        child: Text(
-                          'J\'accepte les conditions d\'utilisation et la politique de confidentialité',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textSecondary,
-                            height: 1.4,
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text.rich(
+                          TextSpan(
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textSecondary,
+                              height: 1.4,
+                            ),
+                            children: [
+                              const TextSpan(text: 'J\'accepte les '),
+                              TextSpan(
+                                text: 'conditions d\'utilisation',
+                                style: const TextStyle(
+                                  color: AppTheme.primaryBlue,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const TermsScreen(),
+                                      ),
+                                    );
+                                  },
+                              ),
+                              const TextSpan(
+                                  text:
+                                      ' et la politique de confidentialité'),
+                            ],
                           ),
                         ),
                       ),

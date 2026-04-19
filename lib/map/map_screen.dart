@@ -16,7 +16,7 @@ class MapScreen extends StatefulWidget {
   State<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   final _locationService = LocationService();
   final _overpassService = OverpassService();
   final _mapController = MapController();
@@ -34,7 +34,23 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadUserLocation();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Quand l'utilisateur revient dans l'app (après avoir activé le GPS)
+    // on relance la détection de position
+    if (state == AppLifecycleState.resumed && _locationError != null) {
+      _loadUserLocation();
+    }
   }
 
   // ==========================================================================

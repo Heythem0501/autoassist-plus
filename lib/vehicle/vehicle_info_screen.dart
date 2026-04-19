@@ -5,6 +5,7 @@ import 'vehicle_model.dart';
 import 'vehicle_service.dart';
 import 'vehicle_constants.dart';
 import '../notifications/notification_service.dart';
+import '../core/main_screen.dart';
 
 /// Écran de saisie/modification des informations du véhicule
 class VehicleInfoScreen extends StatefulWidget {
@@ -97,9 +98,20 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
         isError: false,
       );
 
-      if (_isEditMode && mounted) {
-        await Future.delayed(const Duration(milliseconds: 800));
-        if (mounted) Navigator.pop(context);
+      // Attendre un peu pour que l'utilisateur voie le message de succès
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (!mounted) return;
+
+      if (_isEditMode) {
+        // Mode édition : retour à l'écran précédent
+        Navigator.pop(context);
+      } else {
+        // Mode création : remplacer TOUTE la pile par MainScreen
+        // Cette approche est plus fiable que popUntil + AuthWrapper
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+          (route) => false, // supprime TOUTES les routes précédentes
+        );
       }
     }
   }
@@ -302,26 +314,28 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
   }
 
   Widget _buildFuelTypeSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Type de carburant',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(child: _buildFuelCard(FuelType.essence)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildFuelCard(FuelType.diesel)),
-          ],
-        ),
-      ],
-    );
-  }
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Type de carburant',
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+      const SizedBox(height: 12),
+      Row(
+        children: [
+          Expanded(child: _buildFuelCard(FuelType.essence)),
+          const SizedBox(width: 10),
+          Expanded(child: _buildFuelCard(FuelType.diesel)),
+          const SizedBox(width: 10),
+          Expanded(child: _buildFuelCard(FuelType.gpl)),
+        ],
+      ),
+    ],
+  );
+}
 
   Widget _buildFuelCard(FuelType fuelType) {
     final isSelected = _selectedFuelType == fuelType;

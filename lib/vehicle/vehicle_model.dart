@@ -3,25 +3,28 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Types de carburant supportés
 enum FuelType {
   essence,
-  diesel;
+  diesel,
+  gpl;
 
-  /// Libellé affiché à l'utilisateur
   String get label {
     switch (this) {
       case FuelType.essence:
         return 'Essence';
       case FuelType.diesel:
         return 'Diesel';
+      case FuelType.gpl:
+        return 'GPL';
     }
   }
 
-  /// Icône associée au type de carburant
   String get emoji {
     switch (this) {
       case FuelType.essence:
         return '⛽';
       case FuelType.diesel:
         return '🛢️';
+      case FuelType.gpl:
+        return '💨';
     }
   }
 
@@ -39,7 +42,7 @@ class Vehicle {
   final String brand;           // Marque (ex: Peugeot)
   final String model;           // Modèle (ex: 208)
   final int year;               // Année (ex: 2020)
-  final FuelType fuelType;      // Essence ou Diesel
+  final FuelType fuelType;      // Essence, Diesel ou GPL
   final int currentMileage;     // Kilométrage actuel (en km)
   final DateTime createdAt;     // Date de création du profil véhicule
   final DateTime updatedAt;     // Date de dernière modification
